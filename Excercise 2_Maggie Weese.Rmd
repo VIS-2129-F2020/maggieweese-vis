@@ -146,7 +146,7 @@ ggplot(covid_countries, aes(fill = newDeath, label = "Country_Region")) +
   ggtitle("Confirmed COVID-19 Deaths in South America as of 19 September 2020") +
   theme(legend.position = "right",
         legend.direction="vertical") +
-  geom_sf_text(aes(label = name), size=3, color = "Red", inherit.aes = FALSE) +
+  geom_sf_text(aes(label = name), size=3, color = "darkslategray4", inherit.aes = FALSE) +
   annotation_scale() + 
   annotation_north_arrow(location = "bl", which_north = "true", 
         pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
@@ -165,7 +165,7 @@ ggplot(covid_countries) +
   geom_sf(fill = NA, color = "gray") +
   geom_sf(data = covid_circles, 
           aes(size = newDeath),
-          alpha = 0.5, color = "orange") +
+          alpha = 0.5, color = "firebrick") +
     scale_size_continuous(name = "Number of Confirmed\nCOVID-19 Deaths",
     breaks = seq(0, 30000, by = 5000),
     labels = formatC(seq(0, 30000, by = 5000),
