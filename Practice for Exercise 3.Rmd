@@ -1,0 +1,49 @@
+---
+title: "Practice Code - Exercise 3"
+author: "Maggie Weese"
+date: "9/25/2020"
+output: html_document
+---
+```{r}
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(tidyverse)
+library(ggspatial)
+library(cartogram)
+library(ggthemes)
+```
+
+```{r}
+neighborhoods <- st_read("http://bostonopendata-boston.opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D",
+                         quiet=TRUE)
+
+schools <- st_read("http://bostonopendata-boston.opendata.arcgis.com/datasets/1d9509a8b2fd485d9ad471ba2fdb1f90_0.kml?outSR=%7B%22latestWkid%22%3A2249%2C%22wkid%22%3A102686%7D",
+                         quiet=TRUE)
+```
+
+```{r, fig.width=8, fig.height=8}
+ggplot(neighborhoods)+
+  geom_sf(aes(fill=Name)) +
+  geom_sf(data=schools)+
+  theme_map() + 
+  theme(legend.position=c(0.8,0)) #80% across figure and o% in height
+    #legend.background = element_rect(fill=alpha("white", 0.5)))
+
+#U can select the figure by using SE<-nhoods%>%filter (name=“south end”). Then add it as a layer in geom_sf(data=SE)
+
+```
+
+```{r}
+test <- st_covers(neighborhoods, schools)
+lengths(test)
+
+neighborhoods <- neighborhoods %>%
+  mutate(schools = lengths(st_covers(neighborhoods, schools)))
+
+ggplot (neighborhoods) +
+geom_sf(aes(fill=schools)) + 
+  theme_map() +
+  scale_fill_gradientn(colors = c("red", "yellow, "green")
+```
+
