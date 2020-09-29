@@ -1,0 +1,376 @@
+---
+title: "Creative Assignment 3"
+author: "Maggie Weese"
+date: "9/25/2020"
+output:
+  html_document:
+    theme: spacelab
+    toc: true
+    toc_float: true
+    code_folding: hide
+    
+---
+
+
+# Loading Data
+
+```{r, message=FALSE}
+library(sf)
+library(tidyverse)
+library(ggthemes)
+library(rnaturalearth)
+library(ggspatial)
+library(cartogram)
+library(rgdal)
+library(units)
+library(nngeo)
+library(ggplot2)
+```
+
+## Loading Data for Baltimore City 
+
+All the data retrieved was from https://data.baltimorecity.gov/browse?provenance=official&q=neighborhoods&sortBy=relevance&page=2. From the site, I loaded two polygon data sets, neighborhood and vegetated area, and two point data sets, Charm City circulator bus stops, schools and library locations. 
+```{r, include=FALSE}
+neighborhoods <- st_read("https://data.baltimorecity.gov/api/geospatial/h8i5-gvdz?method=export&format=KML",
+                          quiet=TRUE)
+
+libs <- st_read("https://data.baltimorecity.gov/api/geospatial/vchf-3xpa?method=export&format=KML",
+                       quiet=TRUE)
+                     
+busstop <- st_read("https://data.baltimorecity.gov/api/geospatial/k8kg-234b?method=export&format=KML",
+                     quiet=TRUE)
+
+veggie <- st_read("C:\\Users\\admin\\Downloads\\vegetated_area.kml")
+
+schools <- st_read("https://data.baltimorecity.gov/api/geospatial/y4x7-8za4?method=export&format=KML")
+```
+
+
+##Modifying Coordinate System
+I accessed my coordinate plan athttps://spatialreference.org/ and went with the SR-ORG:7898, Baltimore City's coordinate system. 
+```{r}
+Bmore_plane <-"+proj=omerc +lat_0=39.304635 +lonc=-76.614429 +alpha=0 +k=1 +x_0=106.4881889763779 +y_0=788.8544577089153 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs"
+
+neighborhoods <- neighborhoods  %>% 
+  st_transform(Bmore_plane)
+
+
+libs <- libs  %>% 
+  st_transform(Bmore_plane)
+
+busstop <- busstop %>%
+  st_transform(Bmore_plane)
+
+veggie <- veggie %>%
+  st_transform(Bmore_plane)
+
+schools <- schools %>%
+  st_transform(Bmore_plane)
+```
+
+
+# Creating Geospatial Representations
+
+## Initial Map of Variables
+
+This is my initial attempt at creating a map of my variables: library locations, schools, bus stops, vegetated area, and neighborhoods. 
+```{r, fig.width=8, fig.height=8}
+ggplot(neighborhoods) + 
+  geom_sf(fill=NA, color="grey") + 
+  geom_sf(data=veggie, color="chartreuse4") +
+  geom_sf(data=libs, color="black", size=2) +
+  geom_sf(data=busstop, color="blue", size=1) +
+  geom_sf(data=schools, color="purple", size=2) +
+  annotation_scale() +
+  theme_map()
+
+```
+
+## Map of Charm City Circulator Bus Stops within 0.5 Miles of a Public Library 
+
+### Creating Buffer Around Bus Stops
+
+In this section, I created a 0.5 mile buffer around each library and merged any overlapping buffers based on the code Carole provided in the tutorial.
+```{r}
+
+libs_buffer <- st_buffer(libs, dist = 800) %>%
+  st_union()
+
+ggplot(libs_buffer) +
+  geom_sf() +
+  theme_map()
+```
+
+### Subsetting Data Points of Bus Stops with a Polygon of Libraries
+I was interested in seeing how many Charm City Ciruclator stops, the free bus service in Baltimore, were in a half mile of a library. Below I create a subset of the circulator stops based on 0.5 buffer around libraries. This code was adapted from the code Carole provided in the tutorial.
+
+```{r}
+busstop_libs <- busstop[libs_buffer,]
+  
+ggplot(libs_buffer) +
+  geom_sf() +
+  geom_sf(data = busstop_libs, 
+          color = "blue", 
+          size = 1) +
+  theme_map()
+```
+
+Here I create a binary variable of if a library point has a bus stop within its 0.5 mile buffer radius. I then calculate the number of bus stops that are within a 0.5 mile radius of a library. This code was adapted from the code Carole provided in the tutorial.
+
+```{r}
+busstop <- busstop %>%
+  st_join(busstop_libs) %>%
+  mutate(by_libs = !is.na(Name.y))
+
+n_busstop_libs <- sum(busstop$by_libs)
+
+n_busstop_libs
+```
+
+Here, I convert the total number to a percentage of total Charm City Circulator bus stops, 4% of bus stops. This code was adapted from the code Carole provided in the tutorial.
+
+```{r}
+n_busstop<- length(busstop$by_libs)
+
+pct_busstop_libs <- n_busstop_libs / n_busstop
+
+pct_busstop_libs
+```
+
+### Creating the Final Map  of Charm City Circulator Bus Stops within 0.5 Miles of a Public Library 
+This code was adapted from the code Carole provided in the tutorial.
+
+```{r, fig.width=8, fig.height=8}
+#Need to figure out how to overlay the text over the graph
+
+left_side  <- st_bbox(neighborhoods)$xmin
+top_side <- st_bbox(neighborhoods)$ymax
+
+
+ggplot(neighborhoods) +
+  geom_sf(fill = "grey97", color = "grey90") + 
+  geom_sf(data = busstop, size = 1,
+          aes(color = by_libs)) +
+  scale_color_manual(values = c("turquoise2", "blue"),
+          name = "Baltimore City \nCirculator Bus Stops\nNear Libraries",
+          labels = c("No Library within 0.5 mile",
+                     "Library within 0.5 mile"))+
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tr", which_north = "true", 
+        pad_x = unit(3, "in"), pad_y = unit(7, "in"),
+        style = north_arrow_fancy_orienteering) +
+  annotate(geom = "text", x = left_side, 
+           y = top_side,  
+           label = paste("Of the ", 
+                         prettyNum(n_busstop, big.mark = ","), 
+                         " circulator bus stops\n  in Baltimore, ", 
+                         prettyNum(n_busstop_libs, big.mark = ","),
+                         " (", 
+                         prettyNum(100*pct_busstop_libs, digits = 0),
+                         "%) are\n within a half-mile of a library.",
+                         sep = ""),
+           hjust = -0.1, vjust = 3, size = 4) +
+  theme_map()
+
+```
+
+## Chloropleth Map of Number of Schools in Baltimore Neighborhoods
+Here, I look at the number of schools in each neighborhood in Baltimore and because we have so many neighborhoods in Baltimore, it looks a little wild with many neighborhoods having no schools at all. This map brings up questions around neighborhood boundaries and limitations to the information in this map. It looks as if there is no school in many of the neighborhoods, but given how small each neighborhoods is, each school likely pulls from multiple neighborhoods. In addition, the school could be just over a neighborhood line, still in close proximity, but not technically in the neighborhood. This code was adapted from the code Carole provided in the tutorial.
+
+```{r, fig.width=8, fig.height=8}
+neighborhoods <- neighborhoods %>%
+  mutate(num_schools = lengths(st_covers(neighborhoods, schools)))
+
+
+ggplot(neighborhoods) + 
+  geom_sf(color=NA,
+          aes(fill=num_schools)) +
+  scale_fill_viridis_c(option = "viridis", direction = 1, name = "Baltimore neighborhoods by \nnumber of public schools",
+                       breaks <- seq(0,10, by = 1),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "schools")) +
+  annotation_scale(location="br") + 
+  annotation_north_arrow(location = "tr", which_north = "true", 
+        pad_x = unit(3, "in"), pad_y = unit(7, "in"),
+        style = north_arrow_fancy_orienteering)  +
+  theme_map() +
+    theme(legend.background = element_rect(fill = alpha("white", 0.5),
+                                            color="grey"))
+
+
+
+```
+
+## Map of Public Schools within 0.5 Miles of a Public Libraries
+
+In this section, I look at the public libraries within 0.5miles of a public school. First, I create a 0.5mile buffer around each public library using my buffer around schools created above. All the code used was adapted from the code Carole provided in the tutorial.
+
+### Subsetting Data Points of Public Libraries with a Polygon of Public Schools
+Next, I will subset the public school locations in the public library 0.5mile buffer polygon. 
+```{r}
+schools_libs <- schools[libs_buffer,]
+  
+ggplot(libs_buffer) +
+  geom_sf() +
+  geom_sf(data = schools_libs, 
+          color = "blue", 
+          size = 1) +
+  theme_map()
+```
+
+In this section, I create a binary variable of if a public library has a public school within its 0.5 mile buffer radius. I then calculate the number of public schools within a .5 mile radius of a public library.
+```{r}
+
+schools <- schools %>%
+  st_join(schools_libs) %>% #spatial join of schools and libs data
+  mutate(by_libs = !is.na(Name.y)) #make a column called name.y and if there is a lib in the specified length, put the name, otherwise na -                                       based on this, if NA than say false, if name than true and call this column by_libs
+
+n_schools_libs <- sum(schools$by_libs) #calculate the number of schools in prox to library through sum of schools with TRUE for by_libs
+
+n_schools_libs #give value amount
+
+```
+
+Here, I convert the total number of public schools in a 0.5 mile radius of a public library to a percentage of total public schools. in this case 6%. 
+
+```{r}
+n_schools<- length(schools$by_libs) # create a variable n_schools that is the length of all rows in the column by_libs
+
+pct_schools_libs <- n_schools_libs / n_schools #create variable called pct_school that is the number of schools in prox lib/total schools
+
+pct_schools_libs #give variable amount
+```
+
+### Creating the final Map of Schools within 0.5 mile of a Library
+```{r, fig.width=8, fig.height=8}
+#Need to figure out how to overlay the text over the graph
+
+left_side  <- st_bbox(neighborhoods)$xmin #creating variable that is tied to the spatial xmin of neighborhoods, used to create where text appears later in code
+top_side <- st_bbox(neighborhoods)$ymax #creating variable that is tied to the spatial ymin of neighborhoods, used to create where text appears later in code
+
+ggplot(neighborhoods) + #plot neighborhood map
+ geom_sf(fill = "grey97", color = "grey90") + #choosing colors of lines (fill) and background (color)
+  geom_sf(data = schools, size = 1.5, #make the data points that appears be based on spatial data of busstop with size 1
+          aes(color = by_libs)) + #make the color be based on the variable by_libs - the T or F from above code
+  scale_color_manual(values = c("turquoise2", "blue"),
+          name = "Baltimore City \nSchools\nNear Libraries", #name of the key
+          labels = c("No Library within 0.5 mile", #description of the key colors
+                     "Library within 0.5 mile"))+
+  annotation_scale(location = "br") + #location of scale
+  annotation_north_arrow(which_north = "true", #point north
+        pad_x = unit(3, "in"), pad_y = unit(0, "in"), #move arrow by in of x and y from point 0 0 being bottom left
+        style = north_arrow_fancy_orienteering) + # style of arrow
+  annotate(geom = "text", x = left_side,  #put this text at x I specified above
+           y = top_side,  #put this text at y I specified above
+           label = paste("Of the ", #text to include there
+                         prettyNum(n_schools), #insert n_schools number
+                         " public schools \n in Baltimore City,\n", 
+                         prettyNum(n_schools_libs), #insert n_schools_libs
+                        " (", prettyNum(100*pct_schools_libs, digits = 0), #create percentage based on that number above
+                         "%) are within a half-mile \n of a library.",
+                         sep = ""),
+           hjust = 0, vjust = 7.25, size = 4) + #size of font and location adjustment
+  theme_map() #change theme of map
+
+```
+
+## Density of Public Schools in Baltimore City Neighborhoods 
+In this section, I look at the number of public schools in each neighborhood in Baltimore and like above, because we have so many neighborhoods in Baltimore that are each of relatively small area, it looks a little odd with many neighborhoods having no schools at all. This code was adapted from the code Carole provided in the tutorial.
+
+
+```{r, fig.width=8, fig.height=8}
+
+neighborhoods <- neighborhoods %>%
+  mutate(area = set_units(st_area(neighborhoods), km^2)) %>% #within neighborhood, make a variable named area that is equal to area of neighborhoods in m2
+  mutate(school_dens = as.numeric(num_schools / area)) #make variable school_dens that is a number of number of schools divided by neighborhood variable
+
+ggplot(neighborhoods) +
+  geom_sf(color = NA, 
+          aes(fill = school_dens)) +
+    scale_fill_viridis_c(option = "inferno", direction = -1, name = 
+                           "Baltimore neighborhoods\nby school density",
+                       breaks = breaks <- seq(0, 10, by = 3),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "schools per square km")) +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(which_north = "true", 
+        pad_x = unit(3, "in"), pad_y = unit(0, "in"),
+  style = north_arrow_fancy_orienteering) + # style of arrow
+  theme_map() 
+
+```  
+
+## Map of Baltimore Neighborhoods by Presense of Overlapping Vegetated Area 
+First, I created two variables, one that looked at the number of neighborhoods that have vegetation overlapping, then I created a binary variable called has_veggie for any neighborhoods with vegetation present. I then summed the number and got 196 neighborhoods. This code was adapted from the code Carole provided in the tutorial.
+```{r}
+neighborhoods <- neighborhoods %>%
+  mutate(num_veggie = lengths(st_overlaps(neighborhoods, veggie))) %>%
+  mutate(has_veggie = num_veggie > 0)
+
+n_veggie_neighborhoods <- sum(neighborhoods$has_veggie)
+
+n_veggie_neighborhoods
+```
+
+```{r, fig.width=8, fig.height=8}
+left_side  <- st_bbox(neighborhoods)$xmin
+top_side <- st_bbox(neighborhoods)$ymax
+
+ggplot(veggie) +
+  geom_sf(fill = "lightblue", color = NA) +
+  geom_sf(data = neighborhoods,
+          aes(fill = has_veggie)) +
+  scale_fill_manual(values = c("cornsilk1", "mediumseagreen"),
+          name = "Baltimore Neighborhoods\nby presence of Vegetated Area", 
+          labels = c("Neighborhood without\nan overlapping vegetated area",
+                     "Neighborhood with an\noverlapping vegetated area")) +
+  annotation_scale(location = "br") +
+  annotate(geom = "text", x = left_side, 
+           y = top_side - 1000, 
+           label = paste(n_veggie_neighborhoods,
+                         "of Baltimore's", 
+                         length(neighborhoods$Name),
+                         "neighborhoods\n contain or overlap with", 
+                         "a vegetated area."),
+           hjust = .1, vjust = 16, size = 4) +
+  annotation_north_arrow(which_north = "true", 
+        pad_x = unit(3, "in"), pad_y = unit(0, "in"),
+  style = north_arrow_fancy_orienteering) + 
+  theme(legend.background = element_rect(fill = alpha("white", 0.5),
+                                            color="grey")) +
+  theme_map()
+```
+
+## Chloropleth Map of Free Bus Service Stops in Baltimore Neighborhoods
+I found this map really interesting because it shows an disparity people in Baltimore talk about between the "white L" and the "black butterfly." The free transportation, amenities, bike lanes, grocery stores, ect. are all concentrated in the majority white neighborhoods in the city known as the "white L" (seen below). Whereas, the predominantly black neighborhoods, the "black butterfly", have a much lower level and concentration of these resources. While I do not have the racial data overlayed in this map, having seen maps of Baltimore's racial makeup across neighborhoods, the concentration of free bus service stops is nearly 1:1. This code was adapted from the code Carole provided in the tutorial.
+
+```{r, fig.width=8, fig.height=8}
+neighborhoods <- neighborhoods %>%
+  mutate(num_bus = lengths(st_covers(neighborhoods, busstop)))
+
+left_side  <- st_bbox(neighborhoods)$xmin
+top_side <- st_bbox(neighborhoods)$ymax
+
+ggplot(neighborhoods) + 
+  geom_sf(color=NA,
+          aes(fill=num_bus)) +
+  scale_fill_viridis_c(option = "viridis", direction = 1, name = "Baltimore neighborhoods by \nnumber of Charm City Circulator Stops",
+                       breaks <- seq(0,15, by = 3),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "bus stops")) +
+  annotation_scale(location="br") + 
+  annotation_north_arrow(location = "tr", which_north = "true", 
+        pad_x = unit(3, "in"), pad_y = unit(7, "in"),
+        style = north_arrow_fancy_orienteering)  +
+  theme_map() +
+    theme(legend.background = element_rect(fill = alpha("white", 0.5),
+                                            color="grey"))+
+     annotate(geom = "text", x = left_side, 
+           y = top_side,  
+           label = paste("  Balltimore City's ",
+                         length(busstop$by_libs), 
+                         " free bus\n service stops are concentrated in\n    24 neighborhoods.",
+                         sep = ""),
+           hjust = -0.1, vjust = 2.5, size = 4, color = "white")
+```
+
