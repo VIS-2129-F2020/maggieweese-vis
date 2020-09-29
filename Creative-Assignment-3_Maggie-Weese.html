@@ -1625,8 +1625,11 @@ library(nngeo)
 library(ggplot2)</code></pre>
 <div id="loading-data-for-baltimore-city" class="section level2">
 <h2>Loading Data for Baltimore City</h2>
-<p>All the data retrieved was from <a href="https://data.baltimorecity.gov/browse?provenance=official&amp;q=neighborhoods&amp;sortBy=relevance&amp;page=2" class="uri">https://data.baltimorecity.gov/browse?provenance=official&amp;q=neighborhoods&amp;sortBy=relevance&amp;page=2</a>. From the site, I loaded two polygon data sets, neighborhood and vegetated area, and two point data sets, Charm City circulator bus stops, schools and library locations.</p>
-<p>##Modifying Coordinate System I accessed my coordinate plan athttps://spatialreference.org/ and went with the SR-ORG:7898, Baltimore City’s coordinate system.</p>
+<p>All the data retrieved was from <a href="https://data.baltimorecity.gov/browse?provenance=official&amp;q=neighborhoods&amp;sortBy=relevance&amp;page=2" class="uri">https://data.baltimorecity.gov/browse?provenance=official&amp;q=neighborhoods&amp;sortBy=relevance&amp;page=2</a>. From the site, I loaded two polygon data sets, neighborhood and vegetated area, and three point data sets, Charm City circulator bus stops, schools and library locations.</p>
+</div>
+<div id="modifying-coordinate-system" class="section level2">
+<h2>Modifying Coordinate System</h2>
+<p>I accessed my coordinate plan athttps://spatialreference.org/ and went with the SR-ORG:7898, Baltimore City’s coordinate system.</p>
 <pre class="r"><code>Bmore_plane &lt;-&quot;+proj=omerc +lat_0=39.304635 +lonc=-76.614429 +alpha=0 +k=1 +x_0=106.4881889763779 +y_0=788.8544577089153 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs&quot;
 
 neighborhoods &lt;- neighborhoods  %&gt;% 

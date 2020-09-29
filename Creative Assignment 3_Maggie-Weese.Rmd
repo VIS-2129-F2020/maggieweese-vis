@@ -29,7 +29,7 @@ library(ggplot2)
 
 ## Loading Data for Baltimore City 
 
-All the data retrieved was from https://data.baltimorecity.gov/browse?provenance=official&q=neighborhoods&sortBy=relevance&page=2. From the site, I loaded two polygon data sets, neighborhood and vegetated area, and two point data sets, Charm City circulator bus stops, schools and library locations. 
+All the data retrieved was from https://data.baltimorecity.gov/browse?provenance=official&q=neighborhoods&sortBy=relevance&page=2. From the site, I loaded two polygon data sets, neighborhood and vegetated area, and three point data sets, Charm City circulator bus stops, schools and library locations. 
 ```{r, include=FALSE}
 neighborhoods <- st_read("https://data.baltimorecity.gov/api/geospatial/h8i5-gvdz?method=export&format=KML",
                           quiet=TRUE)
@@ -46,7 +46,8 @@ schools <- st_read("https://data.baltimorecity.gov/api/geospatial/y4x7-8za4?meth
 ```
 
 
-##Modifying Coordinate System
+
+## Modifying Coordinate System
 I accessed my coordinate plan athttps://spatialreference.org/ and went with the SR-ORG:7898, Baltimore City's coordinate system. 
 ```{r}
 Bmore_plane <-"+proj=omerc +lat_0=39.304635 +lonc=-76.614429 +alpha=0 +k=1 +x_0=106.4881889763779 +y_0=788.8544577089153 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs"
