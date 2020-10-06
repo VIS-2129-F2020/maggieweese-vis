@@ -10,8 +10,9 @@ output:
     code_folding: hide
 ---
 # Creating Isochrones in R Studio 
+Thank you to Carole and Alex for the base code for this exercise!
 
-## Loading Libraries
+## Loading Libraries and Data
 ```{r, message=FALSE}
 library(osmdata)
 library(opentripplanner)
@@ -21,14 +22,19 @@ library(ggthemes)
 library(ggspatial)
 ```
 
-BPP_libraries is data on public pools in Baltimore sourched from the Baltimore City Data Directory
-```{r}
+BPP_libraries is data on public pools in Baltimore sourced from the Baltimore City Data Directory. Bmore_schools is data on all public schools in Baltimore also sourced from the Baltimore City Data Directory. 
+```{r, message=FALSE, results='hide'}
 BPP_libraries <- st_read(
   "https://data.baltimorecity.gov/api/geospatial/2fex-mveq?method=export&format=KML")
+
+Bmore_schools <- st_read(
+  "https://data.baltimorecity.gov/api/geospatial/y4x7-8za4?method=export&format=KML")
+
+
 ```
 
 ## Using Open Trip Planner
-This code allows me to search for streets in Baltimore, MD in Open Trip Planner and save it onto my desktop.
+This code searches for streets in Baltimore, MD in Open Trip Planner and save it onto my desktop.
 ```{r}
 opq(bbox = 'Baltimore MD USA') %>%
   add_osm_feature(key = 'highway') %>%
@@ -36,7 +42,7 @@ opq(bbox = 'Baltimore MD USA') %>%
 ```
 
 ## Changing Projections
-In this section, I shift the projection to be the Baltimore City projection found on the site Spatial Reference. 
+In this section, I shift the projection to be the Baltimore City projection found on the site Spatial Reference. I also create the variables used in the map below. 
 ```{r}
 Bmore_state_plane <- "+proj=omerc +lat_0=39.304635 +lonc=-76.614429 +alpha=0 +k=1 +x_0=106.4881889763779 +y_0=788.8544577089153 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs"
 
@@ -59,7 +65,7 @@ ggplot(bmore_streets) +
 ## Mapping Isochrones from OTP Data
 
 ### Connection to OTP
-```{r}
+```{r, message=FALSE, results='hide'}
 path_otp <- otp_dl_jar("OTP")
 
 ```
@@ -71,7 +77,7 @@ path_otp <- paste(path_data, "otp.jar",sep = "/")
 otp_build_graph(otp = path_otp, dir = path_data, memory = 1024) 
 ```
 
-```{r}
+```{r, message=FALSE, results='hide'}
 otp_setup(otp = path_otp, dir = path_data, memory =1024)
 ```
 
@@ -80,8 +86,8 @@ otp_setup(otp = path_otp, dir = path_data, memory =1024)
 otpcon <- otp_connect()
 ```
 
-### Creating Isochrone Data for 5 minute Walking and Driving Radius from Baltimore City public pools. 
-```{r}
+### Creating Isochrone Data for 5 minute Walking and Driving Radius from Baltimore City Public Pools. 
+```{r, message=FALSE, results='hide', warning=FALSE}
 iso_5min_walk <- 
   otp_isochrone(otpcon = otpcon, fromPlace = BPP_libraries, 
                 mode = "WALK", cutoffSec = 300) %>%
@@ -99,9 +105,7 @@ iso_all_modes <- rbind(iso_5min_drive, iso_5min_walk)
 ```
 
 ### Mapping Isochrones for Walking and Driving 
-```{r, fig.height=8, fig.width=8}
-
-#Question: In the 3 modes graph, all of the points appear with a by car isochrone but not in this graph
+```{r, fig.height=8, fig.width=8, message=FALSE, results='hide', warning=FALSE}
 
 right_side <- st_bbox(iso_all_modes)$xmax
 left_side  <- st_bbox(iso_all_modes)$xmin
@@ -114,7 +118,7 @@ ggplot(iso_all_modes) +
   geom_sf(data = BPP_libraries) +
   coord_sf(xlim = c(left_side, right_side), 
            ylim = c(bottom_side, top_side), expand = FALSE) +
-  scale_fill_viridis_d(name = "Area that is reachable within 10 minutes",
+  scale_fill_viridis_d(name = "Area that is reachable within 5 minutes",
                        labels = c("By car", "By foot")) +
   theme_map() +
   labs(caption = "Basemap Copyright OpenStreetMap contributors")
@@ -122,9 +126,8 @@ ggplot(iso_all_modes) +
 
 ```
 
-## Data Visuals for Isochrones
-```{r}
-#Not sure what is up with my scale - the numbers seem too big, also why did it remove 8 rows?
+## Graph of Comparing Area of Driveshed to Walkshed
+```{r, message=FALSE, results='hide', warning=FALSE}
 
 iso_areas <- iso_all_modes %>%
   mutate(area = st_area(iso_all_modes)) %>%
@@ -142,11 +145,13 @@ ggplot(iso_areas,
             "Area within a five-minute driving distance\nof a public pool\n(square km)",           
             breaks = breaks <- seq(0, 15000000, by = 1500000),
             labels = breaks / 1000000) + 
+  ggtitle("Area Within 5 Min Driving Distance of Public Pool vs 5 Min Walking Distance") + 
+
   theme_bw()
 
 ```
 
-```{r}
+```{r, message=FALSE, results='hide', warning=FALSE}
 iso_5min_walk <- 
   otp_isochrone(otpcon = otpcon, fromPlace = BPP_libraries, 
                 mode = "WALK", cutoffSec = 300) %>%
@@ -169,7 +174,8 @@ iso_all_modes2 <- rbind(iso_5min_walk, iso_5min_drive, iso_5min_bike)
 
 ```
 
-```{r, fig.height=8, fig.width=8}
+## Mapping Isochrones for Walking, Driving, and Biking
+```{r, fig.height=8, fig.width=8, message=FALSE, results='hide' }
 right_side <- st_bbox(iso_all_modes2)$xmax
 left_side  <- st_bbox(iso_all_modes2)$xmin
 top_side <- st_bbox(iso_all_modes2)$ymax
@@ -182,39 +188,87 @@ ggplot(iso_all_modes2) +
   coord_sf(xlim = c(left_side, right_side), 
            ylim = c(bottom_side, top_side), expand = FALSE) +
   scale_fill_manual(values = c("#00AFBB", "#E7B800", "#FC4E07"),
-                      name = "Area that is reachable within 10 minutes",
-                      labels = c("By foot","By car", "By bike")) +
+                      name = "Area that is reachable within 5 minutes",
+                      labels = c("By bike", "By car", "By foot")) +
   theme_map() +
+  labs(caption = "Basemap Copyright OpenStreetMap contributors")
+
+
+```
+
+## Creating Map of Public Schools within 5 min Drive of a Public Pool
+
+### Selecting Schools within 5 min Driveshed of Public Pools
+```{r}
+Bmore_schools <- Bmore_schools %>% 
+  st_transform(Bmore_state_plane)
+
+drive_schools <- Bmore_schools[iso_5min_drive,]
+
+ggplot(iso_5min_drive) +
+  geom_sf() +
+  geom_sf(data = drive_schools, 
+          color = "blue", 
+          size = 1) +
+  theme_map()
+```
+
+### Calculating Number and Percentage of Schools within Driveshed
+```{r}
+Bmore_schools <- Bmore_schools %>%
+  st_join(drive_schools) %>%
+  mutate(by_pool = !is.na(Name.y))
+
+n_drive_schools <- sum(Bmore_schools$by_pool)
+
+n_drive_schools
+
+```
+
+```{r}
+n_Bmore_schools <- length(Bmore_schools$by_pool)
+
+pct_drive_schools <- n_drive_schools / n_Bmore_schools
+
+pct_drive_schools
+```
+
+### Mapping Public Schools within 5 min Drive of a Public Pool
+```{r, fig.height=8, fig.width=8}
+right_side <- st_bbox(iso_all_modes)$xmax
+left_side  <- st_bbox(iso_all_modes)$xmin
+top_side <- st_bbox(iso_all_modes)$ymax
+bottom_side <- st_bbox(iso_all_modes)$ymin
+
+ggplot(iso_5min_drive) +
+  annotation_map_tile(zoomin = 0, type = "cartolight", progress = "none") +
+  geom_sf(fill = "seashell1", alpha = 0.5) +
+  geom_sf(data = Bmore_schools, size = 1.5,
+          aes(color = by_pool)) +
+  scale_color_manual(values = c("#9ebcda", "blueviolet"),
+          name = "Baltimore City \nPublic Schools\nNear Public Pools",
+          labels = c("No School within 5 min drive",
+                     "School within 5 min drive"))+
+  coord_sf(xlim = c(left_side, right_side), 
+           ylim = c(bottom_side, top_side), expand = FALSE) +
+  scale_fill_discrete(guide=FALSE) +
+  theme_map() +
+  annotate(geom = "text", x = left_side, 
+           y = top_side,  
+           label = paste("  Of the ", 
+                         prettyNum(n_Bmore_schools, big.mark = ","), 
+                         " public schools\n  in Baltimore, ", 
+                         prettyNum(n_drive_schools, big.mark = ","),
+                         " (", 
+                         prettyNum(100*pct_drive_schools, digits = 0),
+                         "%) are\n within a 5 minute drive from a \n    public pool.",
+                         sep = ""),
+           hjust = -0.1, vjust = 1.5, size = 4) +
   labs(caption = "Basemap Copyright OpenStreetMap contributors")
 
 ```
 
 ```{r}
-#similar issue with scale as above
-
-iso_areas2 <- iso_all_modes2 %>%
-  mutate(area = st_area(iso_all_modes2)) %>%
-  st_set_geometry(NULL) %>%
-  pivot_wider(names_from = mode, values_from = area) 
-
-ggplot(iso_areas, 
-       aes(x = as.numeric(bike), y = as.numeric(drive))) +
-  geom_point() +
-  scale_x_continuous(name = 
-            "Area within a five-minute walking distance\nof a public pool\n(square km)",
-            breaks = breaks <- seq(100000, 20000000, by = 200000),
-            labels = breaks / 1000000) +
-  scale_y_continuous(name = 
-            "Area within a five-minute driving distance\nof a public pool\n(square km)",           
-            breaks = breaks <- seq(100000, 20000000, by = 200000),
-            labels = breaks / 1000000) + 
-  theme_bw()
-```
-
-```{r}
-#dot_schools <- schools[dortchester,]   
-#[1:10,] - with comma, first 10 rows, without would be column
-#opt_plan() - will find routes between two points
-
+otp_stop()
 ```
 
