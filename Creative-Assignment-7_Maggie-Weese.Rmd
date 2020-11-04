@@ -21,6 +21,8 @@ library(spatial)
 
 # Loading Neighborhood Data
 
+Data from Analyze Boston and the BPDA 2019 Annual Neighborhood Profiles (http://www.bostonplans.org/getattachment/f719d8d1-9422-4ffa-8d11-d042dd3eb37b)
+
 ```{r}
 boston_nhoods <- st_read("https://opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0.geojson", quiet = TRUE) %>%
   dplyr::select(Name)

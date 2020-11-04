@@ -1,0 +1,112 @@
+---
+title: "Creative Assignment 6"
+author: "Maggie Weese"
+date: "10/23/2020"
+output: 
+  html_document:
+    theme: spacelab
+    toc: true
+    toc_float: true
+ 
+---
+
+## Downloading Libraries
+```{r, warning=FALSE, results=FALSE, message=FALSE}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(htmltools)
+library(htmlwidgets)
+library(stringr)
+```
+
+## Downloading Data 
+
+The code for this project is based on Carole's code from the online tutorial. Thank you!! The data below is sourced from Open Data DC. 
+```{r, warning=FALSE, results=FALSE, message=FALSE}
+
+vote <- st_read("https://opendata.arcgis.com/datasets/248606af58964cabb6fcec6460208f23_0.geojson")
+
+early_vote <- st_read ("https://opendata.arcgis.com/datasets/c530d75d09674a6aafe88c613b48cb4b_0.geojson")
+
+mail_vote <- st_read ("https://opendata.arcgis.com/datasets/ba79599555a64e3c80d7de4b54566bde_0.geojson")
+
+DC <- st_read ("https://opendata.arcgis.com/datasets/7241f6d500b44288ad983f0942b39663_10.geojson")
+
+```
+## Creating Centroids for My Data
+```{r, warning=FALSE, results=FALSE, message=FALSE}
+vote_pts <- st_centroid(vote)
+
+early_vote_pts <- st_centroid(early_vote)
+
+mail_vote_pts <- st_centroid(mail_vote)
+                              
+
+```
+
+
+## Final Map
+The select tab code for this map was informed by this tutorial - https://rstudio.github.io/leaflet/showhide.html
+```{r}
+vote_map2 <- leaflet(options = leafletOptions(minZoom = 11.3, maxZoom = 18)) %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite (default)") %>%
+  addProviderTiles(providers$Esri.WorldStreetMap, group = "Esri Street Map") %>%
+   
+  addPolygons(data = DC, fillColor = "purple", fillOpacity = .06, stroke = F)  %>%
+  
+   addCircles(data = mail_vote_pts, fillColor = "red", color = "red", 
+             stroke = FALSE, radius = 80, group = "Mail-In Vote Drop off Site",
+              highlightOptions = highlightOptions(fillColor = "red", 
+                                                  fillOpacity = 1), 
+  
+             popup = paste("Mail-In Vote Drop Off Site", "<br/>", "Location Name:", mail_vote_pts$DROP_SITE, "<br/>",
+                            "Address:", mail_vote_pts$ADDRESS, "<br/>",
+                            "Facility Type: ", mail_vote_pts$FACILITY_TYPE, "<br/>")) %>%    
+  
+  addCircles(data = early_vote_pts, fillColor = "blue", color = "blue", 
+             stroke = FALSE, radius = 80, group = "Early Voting Site",
+              highlightOptions = highlightOptions(fillColor = "blue", 
+                                                  fillOpacity = 1), 
+             
+ 
+             popup = paste("Early Voting Site", "<br/>", "Location Name:", early_vote_pts$LOCATION, "<br/>",
+                            "Address:", early_vote_pts$StAddr, "<br/>",
+                            "Facility Type: ", early_vote_pts$USER_VOTING_SPACE, "<br/>")) %>%  
+  
+  
+  
+    addCircles(data = vote_pts, fillColor = "black", color = "black", 
+             stroke = FALSE, radius = 80, group = "Day of Voting Site",
+              highlightOptions = highlightOptions(fillColor = "Gray", 
+                                                  fillOpacity = 1), 
+             
+             popup = paste("Day of Voting Site", "<br/>", "Location Name:", vote_pts$LOCATION, "<br/>",
+                            "Address:", vote_pts$StAddr, "<br/>",
+                            "Facility Type: ", vote_pts$USER_VOTING_SPACE, " <br/>",
+                           "Early Vote Center: ", vote_pts$EARLY_VOTE_CENTER,  "<br/>")) %>%
+               
+    addControl("Voting Locations in Washington DC", position = "topright") %>%
+  
+  addControl('<a href="https://opendata.dc.gov/">Data source</a>',
+             position = "bottomleft") %>%
+
+  addLayersControl(
+    baseGroups = c("Toner Lite (default)", "Esri Street Map"),
+    overlayGroups = c("Day of Voting Site", "Mail-In Vote Drop off Site", "Early Voting Site"),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+  setMaxBounds( lng1 = -76.9,
+                lat1 = 38.80,
+                lng2 = -77.2,
+                lat2 = 39)
+
+
+
+vote_map2
+```
+
+## Exporting Map
+```{r}
+saveWidget(vote_map2, file = "vote_map2.html")
+```
+
