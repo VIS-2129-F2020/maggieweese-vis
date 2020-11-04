@@ -1,0 +1,142 @@
+---
+title: "Creative Assignment 7"
+author: "Maggie Weese"
+date: "11/2/2020"
+output: html_document
+---
+
+# Loading Libraries
+
+```{r, warning=FALSE, results=FALSE, message=FALSE}
+
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(htmltools)
+library(htmlwidgets)
+library(raster)
+library(gstat)
+library(spatial)
+```
+
+# Loading Neighborhood Data
+
+```{r}
+boston_nhoods <- st_read("https://opendata.arcgis.com/datasets/3525b0ee6e6b427f9aab5d0a1d0a1a28_0.geojson", quiet = TRUE) %>%
+  dplyr::select(Name)
+
+leaflet(boston_nhoods) %>%
+  addProviderTiles(providers$Stamen.TonerLite) %>%
+  addPolygons(highlightOptions = highlightOptions(fillColor = "yellow", 
+                                                  fillOpacity = 1),
+              label = ~Name, 
+              weight = 1) 
+```
+
+# Cloropleth Map
+
+```{r, warning=FALSE, message=FALSE}
+
+boston_nhoods <- boston_nhoods %>%
+  mutate(med_income = c(68209, 76968, 32103, 38235, 65090, 65090 ,65090, 82965, 25937, 77161, 93033, 51549, 91067, 90694, 93033, 65090, 34483, 50110, 79424, 65260, 43256, 47200, 111518, 77223, 88469, NA))
+
+boston_nhoods2 <- drop_na(boston_nhoods)
+
+boston_nhoods2$label <- 
+  paste(boston_nhoods2$Name, "<br>", 
+        "$", boston_nhoods2$med_income) %>% 
+  lapply(htmltools::HTML)
+
+bins <- seq(min(boston_nhoods2$med_income),
+            max(boston_nhoods2$med_income))
+pal <- colorNumeric("viridis", 
+                    domain = boston_nhoods2$med_income,
+                    na.color = "#00000000")
+
+leaflet(boston_nhoods2) %>%
+  addProviderTiles(providers$Stamen.TonerLite) %>%
+  addPolygons(highlightOptions = highlightOptions(fillOpacity = 1),
+              label = ~label,
+              fillColor = ~pal(med_income),
+              weight = 1, color = "black") %>% 
+  addLegend(pal = pal, 
+            values = ~med_income,
+            bins = 3,
+            opacity = 0.7, title = "Median Income (2017)",
+            position = "topright")
+
+```
+
+# Area Centroid Map
+
+```{r, warning=FALSE, message=FALSE}
+
+MA_state_plane <- "+proj=lcc +lat_1=41.71666666666667 +lat_2=42.68333333333333 +lat_0=41 +lon_0=-71.5 +x_0=200000 +y_0=750000 +ellps=GRS80 +units=m +no_defs "
+
+WGS84 <- "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs"
+
+points <- st_centroid(
+  st_transform(boston_nhoods, crs = MA_state_plane)) %>%
+  st_transform(WGS84)
+
+leaflet(points) %>%
+  addProviderTiles(providers$Stamen.TonerLite) %>%
+  addCircles(highlightOptions = highlightOptions(fillOpacity = 1),
+             fillColor = ~pal(med_income),
+             stroke = FALSE, 
+             radius = 100, 
+             fillOpacity = 1) %>%
+  addLegend(pal = pal, 
+            values = ~med_income,
+            bins = 3,
+            opacity = 0.7, title = "Median Income (2017)",
+            position = "topright")
+
+  
+
+```
+
+# Continuous Surface Map
+
+```{r, warning=FALSE, message=FALSE}
+nhoods_inter <- points %>%
+  st_transform(MA_state_plane) %>%
+  as_Spatial()
+
+nhoods_inter <- boston_nhoods2 %>%
+  st_transform(MA_state_plane) %>%
+  as_Spatial()
+
+boston_raster <- raster(nhoods_inter, res=10)
+
+gs <- gstat(formula=med_income~1, locations=nhoods_inter)
+idw_interp <- interpolate(boston_raster, gs)
+
+idw_interp_clip <- mask(idw_interp, nhoods_inter)
+
+```
+
+```{r, warning=FALSE, message=FALSE}
+
+leaflet(points) %>%
+  addProviderTiles(providers$Stamen.TonerLite) %>%
+  addRasterImage(idw_interp_clip, colors = pal, opacity = 0.8) %>% 
+  addLegend(pal = pal, 
+            values = ~med_income,
+            bins = 3,
+            opacity = 0.7, title = "Median Income (2017)",
+            position = "topright")
+```
+
+# Map Comparisons
+## Most Informative Map
+In my opinion, the most informative map is the choloropleth map because it allows users to scroll over the neighborhoods and clearly understand the median income through the pop that lists it versus requiring users to to look at the color shade and estimate the median income for the location by comparing that shade to the key.
+
+## Most Interesting Map
+In my opinion, the most interesting map is the continuous map because it is visually the most interesting to look at and it adds new information that the other maps do not through interpolation. This map also highlights how neighborhood boundaries, while sometimes driven by spatial factors are often driven by politics. While in the chloropleth map we see stark comparisons between neighborhoods, in the interpolated map we see how median income could vary between two neighborhood boundaries and move beyond political lines. 
+
+## Most appropriate to the data
+I think the most appropriate for the data is the chloropleth map because it most accurately represents the data collected. The continuous map and the area centroid map assume that the median income value represents the income at the center of the neighborhood and ripples out continuously, however, without more fine-grained data, I think visualizing the data this way could be inaccurate and misleading.
+
+## Best Map
+For the reasons listed in the "most appropriate" section, I think the choloropleth map is the best map out of the three. I think it is more legible than the centroid map and more accurate than the interpolation map, making it, in my opinion, the all around best map. 
