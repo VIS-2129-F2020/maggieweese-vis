@@ -7,6 +7,8 @@ output:
     theme: spacelab
     toc: true
     toc_float: true
+    code_folding: hide
+ 
 ---
 # Creating Maps, Projection Coordinate Systems and Mapping Variables in R Studio
 
@@ -20,6 +22,7 @@ library(tidyverse)
 library(ggspatial)
 library(cartogram)
 library(ggthemes)
+library(ggrepel)
 library(ggrepel)
 ```
 
@@ -127,15 +130,45 @@ sum_covid <- covid_SA %>% group_by(Country_Region) %>% summarize(newDeath = sum(
 
 ```
 
-
 ### Chloropleth Map of COVID 19 Deaths in South America as of September 19 2020
 Here I create a Chloropleth map. The code is based on code from the online tutorial by Carole. Alex also provided support on code to create labels and combine data on death for each country (thank you!). One challenge I had was preventing the overlapping of the country labels. I found a package called ggrepel that prevents label overlap within geom_text but does not seem to work with geom_sf_text.
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, fig.width=8, fig.height=8}
+
 covid_countries <-sa_transformed %>%
   left_join(sum_covid, by = c("name" = "Country_Region"))
 
-ggplot(covid_countries, aes(fill = newDeath, label = "Country_Region")) +
+covid_countries3 <- covid_countries[-c(7),]
+
+
+ggplot(covid_countries3, aes(fill = newDeath, label = "Country_Region")) +
+  geom_sf(color = "gray") +
+  scale_fill_continuous_tableau(palette = "Orange",
+    name = "Number of\nConfirmed\nCOVID-19\nDeaths",
+    breaks = seq(0, 150000, by = 25000),
+    labels = formatC(seq(0, 150000, by = 25000), 
+                     big.mark = ",", format = "f", digits = 0)) +
+  theme_map() +
+   ggtitle("Confirmed COVID-19 Deaths in South America as of 19 September 2020") +
+  theme(legend.position = "right",
+        legend.direction="vertical") +
+  geom_sf_text(aes(label = name), size=4, color = "gray10", inherit.aes = FALSE) +
+  annotation_scale() + 
+  annotation_north_arrow(location = "bl", which_north = "true", 
+        pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
+        style = north_arrow_fancy_orienteering) +
+  theme(plot.title = element_text(face="bold", size=12, hjust = 0.5))
+
+
+```
+
+```{r, warning=FALSE, fig.width=8, fig.height=8}
+covid_countries3 <-sa_transformed %>%
+  left_join(sum_covid, by = c("name" = "Country_Region"))
+
+covid_countries3 <- covid_countries[-c(7),]
+
+ggplot(covid_countries3, aes(fill = newDeath, label = "Country_Region")) +
   geom_sf(color = NA) +
   scale_fill_viridis_c(option = "viridis", direction = -1,
     name = "Number of\nConfirmed\nCOVID-19\nDeaths",
@@ -146,18 +179,20 @@ ggplot(covid_countries, aes(fill = newDeath, label = "Country_Region")) +
   ggtitle("Confirmed COVID-19 Deaths in South America as of 19 September 2020") +
   theme(legend.position = "right",
         legend.direction="vertical") +
-  geom_sf_text(aes(label = name), size=3, color = "darkslategray4", inherit.aes = FALSE) +
+   geom_sf_text(aes(label = name), size=3.5, color = "slateblue", fontface = "bold", inherit.aes = FALSE) +
   annotation_scale() + 
   annotation_north_arrow(location = "bl", which_north = "true", 
         pad_x = unit(0.75, "in"), pad_y = unit(0.5, "in"),
-        style = north_arrow_fancy_orienteering)
+        style = north_arrow_fancy_orienteering) +
+  theme(plot.title = element_text(face="bold", size=12, hjust = 0.5))
 
+ 
 ```
 
 ### Proportional Symbol Map of COVID 19 Deaths in South America as of September 19 2020
 Here I create a proportional symbol map. The code is based on code from the online tutorial by Carole (thank you!). 
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, fig.width=8, fig.height=8}
 covid_circles <- covid_countries %>%
   st_centroid()
 
@@ -165,7 +200,7 @@ ggplot(covid_countries) +
   geom_sf(fill = NA, color = "gray") +
   geom_sf(data = covid_circles, 
           aes(size = newDeath),
-          alpha = 0.5, color = "firebrick") +
+          alpha = 0.7, color = "darkorange3") +
     scale_size_continuous(name = "Number of Confirmed\nCOVID-19 Deaths",
     breaks = seq(0, 30000, by = 5000),
     labels = formatC(seq(0, 30000, by = 5000),
@@ -176,6 +211,7 @@ ggplot(covid_countries) +
   annotation_north_arrow(location = "bl", which_north = "true", 
         pad_x = unit(0.25, "in"), pad_y = unit(0.5, "in"),
         style = north_arrow_fancy_orienteering) +
+  theme(plot.title = element_text(face="bold", size=12, hjust = 0.5)) +
   theme_void() 
 
 
@@ -184,28 +220,82 @@ ggplot(covid_countries) +
 ### Dorling Cartogram of COVID 19 Deaths in South America as of September 19 2020
 Here I created a dorling cartogram. The code is based on the code from the online tutorial by Carole. Alex also provided support on code for addressing all countries with deaths labeled N/A (in this case, the Falkland Islands). Thank you both!
 
-```{r}
-covid_countries[is.na(covid_countries)] <- 0
+```{r, warning=FALSE, fig.width=8, fig.height=8}
 
-covid_dorling <- covid_countries %>%
- cartogram_dorling("pop_est")
+covid_countries3[is.na(covid_countries3)] <- 0
+
+covid_countries3 <- covid_countries[-c(7),]
+
+covid_dorling <- covid_countries3 %>%
+ cartogram_dorling("newDeath")
 
 ggplot(covid_dorling, aes(fill = newDeath)) +
  geom_sf(color = NA) +
-  scale_fill_viridis_c(
+ scale_fill_gradient2_tableau(
+    name = "Number of\nConfirmed\nCOVID-19\nDeaths",
+    breaks = seq(0, 150000, by = 25000),
+    labels = formatC(seq(0, 150000, by = 25000), 
+                     big.mark = ",", format = "f", digits = 0)) +
+  ggtitle("Confirmed COVID-19 Deaths in South America as of 19 September 2020") +
+  theme(plot.title = element_text(face="bold", hjust = 0.5))+
+  geom_sf_label(aes(geometry, label = name), size = 3.5, color = "gray20", fill = NA, fontface = "bold", label.size =   NA) +
+  theme_map() +
+  theme(legend.background = element_blank()) +
+  theme(plot.title = element_text(face="bold", size=12, hjust = 0.5)) +
+  theme(legend.position = "right",
+        legend.direction="vertical") 
+
+```
+
+### Modified Area Map of COVID 19 Deaths in South America as of September 19 2020
+Here I create a proportional symbol map. The code is based on code from the online tutorial by Carole (thank you!). 
+```{r, warning=FALSE, message=FALSE, error=FALSE, fig.width=8, fig.height=8}
+
+covid_countries3 <- covid_countries[-c(7),]
+
+covid_cart_cont <- covid_countries3 %>% 
+  cartogram_cont("newDeath")
+
+ggplot(covid_cart_cont, aes(fill = newDeath)) +
+ geom_sf(color = "gray") +
+ scale_fill_gradient2_tableau(
+    name = "Number of\nConfirmed\nCOVID-19\nDeaths",
+    breaks = seq(0, 150000, by = 25000),
+    labels = formatC(seq(0, 150000, by = 25000), 
+                     big.mark = ",", format = "f", digits = 0)) +
+  ggtitle("Confirmed COVID-19 Deaths in South America as of 19 Sept 2020") + 
+  geom_sf_label(aes(geometry, label = name), size = 3.5, color = "gray20", fill = NA, label.size =   NA, fontface = "bold") +
+  theme_map() +
+  theme(legend.background = element_blank())+
+  theme(plot.title = element_text(face="bold", hjust = 0.5)) +
+  theme(legend.position = "right",
+        legend.direction="vertical") 
+
+```
+
+```{r, warning=FALSE, message=FALSE, error=FALSE, fig.width=8, fig.height=8}
+
+covid_countries3 <- covid_countries[-c(7),]
+
+covid_cart_ncont <- covid_countries3 %>% 
+  cartogram_ncont("newDeath")
+
+ggplot(covid_cart_ncont, aes(fill = newDeath)) +
+ geom_sf(color = "gray") +
+ scale_fill_gradient2_tableau(
     name = "Number of\nConfirmed\nCOVID-19\nDeaths",
     breaks = seq(0, 150000, by = 25000),
     labels = formatC(seq(0, 150000, by = 25000), 
                      big.mark = ",", format = "f", digits = 0)) +
   ggtitle("Confirmed COVID-19 Deaths in South America as of 19 Sept 2020") +
+  geom_sf_label(aes(geometry, label = name), size = 3.5, color = "gray20", fill = NA, label.size =   NA, fontface = "bold") +
   theme_map() +
-  theme(legend.background = element_blank())
+  theme(axis.title.x = element_text(size = 0), axis.title.y = element_text(size = 0)) + 
+  theme(plot.title = element_text(face="bold", hjust = 0.5)) +
+  theme(legend.position = "right",
+        legend.direction="vertical") 
 
 
 ```
-
-
-
-
 
 
