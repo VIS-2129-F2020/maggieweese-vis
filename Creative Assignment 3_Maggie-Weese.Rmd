@@ -3,18 +3,20 @@ title: "Creative Assignment 3"
 author: "Maggie Weese"
 date: "9/25/2020"
 output:
+  pdf_document:
+    toc: yes
   html_document:
     theme: spacelab
-    toc: true
-    toc_float: true
+    toc: yes
+    toc_float: yes
     code_folding: hide
-    
 ---
 
 
 # Loading Data
 
 ```{r, message=FALSE}
+
 library(sf)
 library(tidyverse)
 library(ggthemes)
@@ -25,6 +27,7 @@ library(rgdal)
 library(units)
 library(nngeo)
 library(ggplot2)
+library(RColorBrewer)
 ```
 
 ## Loading Data for Baltimore City 
@@ -150,10 +153,10 @@ top_side <- st_bbox(neighborhoods)$ymax
 
 ggplot(neighborhoods) +
   geom_sf(fill = "grey97", color = "grey90") + 
-  geom_sf(data = busstop, size = 1,
+  geom_sf(data = busstop, size = 1.2,
           aes(color = by_libs)) +
-  scale_color_manual(values = c("turquoise2", "blue"),
-          name = "Baltimore City \nCirculator Bus Stops\nNear Libraries",
+  scale_color_manual(values = c("skyblue2", "black"),
+          name = "Baltimore City \nCirculator Bus Stops",
           labels = c("No Library within 0.5 mile",
                      "Library within 0.5 mile"))+
   annotation_scale(location = "br") +
@@ -162,15 +165,15 @@ ggplot(neighborhoods) +
         style = north_arrow_fancy_orienteering) +
   annotate(geom = "text", x = left_side, 
            y = top_side,  
-           label = paste("Of the ", 
+           label = paste(" Of the ", 
                          prettyNum(n_busstop, big.mark = ","), 
-                         " circulator bus stops\n  in Baltimore, ", 
+                         " circulator bus stops\n   in Baltimore, ", 
                          prettyNum(n_busstop_libs, big.mark = ","),
                          " (", 
                          prettyNum(100*pct_busstop_libs, digits = 0),
-                         "%) are\n within a half-mile of a library.",
-                         sep = ""),
-           hjust = -0.1, vjust = 3, size = 4) +
+                         "%) are\n  within a half-mile of a library.",
+                         sep = ""), fontface = "italic",
+           hjust = -0.18, vjust = 2.5, size = 4) +
   theme_map()
 
 ```
@@ -184,9 +187,9 @@ neighborhoods <- neighborhoods %>%
 
 
 ggplot(neighborhoods) + 
-  geom_sf(color=NA,
+  geom_sf(color="navajowhite3",
           aes(fill=num_schools)) +
-  scale_fill_viridis_c(option = "viridis", direction = 1, name = "Baltimore neighborhoods by \nnumber of public schools",
+  scale_fill_continuous_tableau(palette = "Orange", name = "Baltimore City\nNeighborhoods by \nNumber of Schools",
                        breaks <- seq(0,10, by = 1),
                        labels = paste(prettyNum(breaks, big.mark = ","),
                                       "schools")) +
@@ -201,6 +204,30 @@ ggplot(neighborhoods) +
 
 
 ```
+
+
+```{r, fig.width=8, fig.height=8}
+
+neighborhoods <- neighborhoods %>%
+  mutate(num_schools = lengths(st_covers(neighborhoods, schools)))
+
+
+ggplot(neighborhoods) + 
+  geom_sf(color="navajowhite3",
+          aes(fill=num_schools)) +
+  scale_fill_continuous_tableau(palette = "Purple", name = "Baltimore City\nneighborhoods\nby school density",
+                       breaks <- seq(0,10, by = 1),
+                       labels = paste(prettyNum(breaks, big.mark = ","),
+                                      "schools")) +
+  annotation_scale(location="br") + 
+  annotation_north_arrow(location = "tr", which_north = "true", 
+        pad_x = unit(3, "in"), pad_y = unit(7, "in"),
+        style = north_arrow_fancy_orienteering)  +
+  theme_map() +
+    theme(legend.background = element_rect(fill = alpha("white", 0.5),
+                                            color="grey"))
+```
+
 
 ## Map of Public Schools within 0.5 Miles of a Public Libraries
 
@@ -251,9 +278,9 @@ top_side <- st_bbox(neighborhoods)$ymax #creating variable that is tied to the s
 
 ggplot(neighborhoods) + #plot neighborhood map
  geom_sf(fill = "grey97", color = "grey90") + #choosing colors of lines (fill) and background (color)
-  geom_sf(data = schools, size = 1.5, #make the data points that appears be based on spatial data of busstop with size 1
+  geom_sf(data = schools, size = 2, #make the data points that appears be based on spatial data of busstop with size 1
           aes(color = by_libs)) + #make the color be based on the variable by_libs - the T or F from above code
-  scale_color_manual(values = c("turquoise2", "blue"),
+  scale_color_manual(values = c("skyblue2", "black"),
           name = "Baltimore City \nSchools\nNear Libraries", #name of the key
           labels = c("No Library within 0.5 mile", #description of the key colors
                      "Library within 0.5 mile"))+
@@ -265,12 +292,12 @@ ggplot(neighborhoods) + #plot neighborhood map
            y = top_side,  #put this text at y I specified above
            label = paste("Of the ", #text to include there
                          prettyNum(n_schools), #insert n_schools number
-                         " public schools \n in Baltimore City,\n", 
+                         " public schools \nin Baltimore City, ", 
                          prettyNum(n_schools_libs), #insert n_schools_libs
                         " (", prettyNum(100*pct_schools_libs, digits = 0), #create percentage based on that number above
-                         "%) are within a half-mile \n of a library.",
-                         sep = ""),
-           hjust = 0, vjust = 7.25, size = 4) + #size of font and location adjustment
+                         "%) are\nwithin a half-mile of a library.",
+                         sep = ""), fontface = "italic",
+           hjust = 0.12, vjust = 10, size = 4) + #size of font and location adjustment
   theme_map() #change theme of map
 
 ```
@@ -286,10 +313,10 @@ neighborhoods <- neighborhoods %>%
   mutate(school_dens = as.numeric(num_schools / area)) #make variable school_dens that is a number of number of schools divided by neighborhood variable
 
 ggplot(neighborhoods) +
-  geom_sf(color = NA, 
+  geom_sf(color="navajowhite3",
           aes(fill = school_dens)) +
-    scale_fill_viridis_c(option = "inferno", direction = -1, name = 
-                           "Baltimore neighborhoods\nby school density",
+     scale_fill_continuous_tableau(palette = "Orange",name = 
+                           "Baltimore City\nNeighborhoods\nby School Density",
                        breaks = breaks <- seq(0, 10, by = 3),
                        labels = paste(prettyNum(breaks, big.mark = ","),
                                       "schools per square km")) +
@@ -321,8 +348,8 @@ ggplot(veggie) +
   geom_sf(fill = "lightblue", color = NA) +
   geom_sf(data = neighborhoods,
           aes(fill = has_veggie)) +
-  scale_fill_manual(values = c("cornsilk1", "mediumseagreen"),
-          name = "Baltimore Neighborhoods\nby presence of Vegetated Area", 
+  scale_fill_manual(values = c("floralwhite", col = "#31a354"),
+          name = "Baltimore City \nNeighborhoods by \nPresence of Vegetated Area", 
           labels = c("Neighborhood without\nan overlapping vegetated area",
                      "Neighborhood with an\noverlapping vegetated area")) +
   annotation_scale(location = "br") +
@@ -332,7 +359,7 @@ ggplot(veggie) +
                          "of Baltimore's", 
                          length(neighborhoods$Name),
                          "neighborhoods\n contain or overlap with", 
-                         "a vegetated area."),
+                         "a vegetated area."), fontface = "italic",
            hjust = .1, vjust = 16, size = 4) +
   annotation_north_arrow(which_north = "true", 
         pad_x = unit(3, "in"), pad_y = unit(0, "in"),
@@ -340,6 +367,8 @@ ggplot(veggie) +
   theme(legend.background = element_rect(fill = alpha("white", 0.5),
                                             color="grey")) +
   theme_map()
+
+
 ```
 
 ## Chloropleth Map of Free Bus Service Stops in Baltimore Neighborhoods
@@ -355,7 +384,7 @@ top_side <- st_bbox(neighborhoods)$ymax
 ggplot(neighborhoods) + 
   geom_sf(color=NA,
           aes(fill=num_bus)) +
-  scale_fill_viridis_c(option = "viridis", direction = 1, name = "Baltimore neighborhoods by \nnumber of Charm City Circulator Stops",
+  scale_fill_viridis_c(option = "viridis", direction = 1, name = "Baltimore City \nNeighborhoods by \nNumber of Circulator Stops",
                        breaks <- seq(0,15, by = 3),
                        labels = paste(prettyNum(breaks, big.mark = ","),
                                       "bus stops")) +
@@ -368,10 +397,31 @@ ggplot(neighborhoods) +
                                             color="grey"))+
      annotate(geom = "text", x = left_side, 
            y = top_side,  
-           label = paste("  Balltimore City's ",
+           label = paste("Balltimore City's ",
                          length(busstop$by_libs), 
-                         " free bus\n service stops are concentrated in\n    24 neighborhoods.",
-                         sep = ""),
-           hjust = -0.1, vjust = 2.5, size = 4, color = "white")
+                         " free bus service\n    stops are concentrated\n    in 24 neighborhoods.",
+                         sep = ""), fontface = "italic",
+           hjust = -0.16, vjust = 2.4, size = 4, color = "white")
 ```
 
+```{r, fig.width=8, fig.height=8}
+
+neighborhoods <- neighborhoods %>%
+  mutate(area = set_units(st_area(neighborhoods), km^2)) %>% #within neighborhood, make a variable named area that is equal to area of neighborhoods in m2
+  mutate(school_dens = as.numeric(num_schools / area)) #make variable school_dens that is a number of number of schools divided by neighborhood variable
+
+ggplot(neighborhoods) +
+  geom_sf(color = NA, 
+          aes(fill = school_dens)) +
+     scale_fill_continuous_tableau(palette = "Purple", name = "Baltimore neighborhoods\nby school density") +
+  annotation_scale(location = "br") +
+  annotation_north_arrow(which_north = "true", 
+        pad_x = unit(3, "in"), pad_y = unit(0, "in"),
+  style = north_arrow_fancy_orienteering) + # style of arrow
+  theme_map() 
+```
+
+```{r}
+
+
+```
