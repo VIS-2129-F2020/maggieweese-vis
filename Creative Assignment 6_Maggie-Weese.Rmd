@@ -53,8 +53,11 @@ vote_map2 <- leaflet(options = leafletOptions(minZoom = 11.3, maxZoom = 18)) %>%
   addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite (default)") %>%
   addProviderTiles(providers$Esri.WorldStreetMap, group = "Esri Street Map") %>%
    
-  addPolygons(data = DC, fillColor = "purple", fillOpacity = .06, stroke = F)  %>%
   
+  addPolygons(data = DC, fillColor = "purple", color = "purple",  fillOpacity = 0.03,
+             stroke = FALSE)  %>%
+  
+
    addCircles(data = mail_vote_pts, fillColor = "red", color = "red", 
              stroke = FALSE, radius = 80, group = "Mail-In Vote Drop off Site",
               highlightOptions = highlightOptions(fillColor = "red", 
@@ -110,3 +113,79 @@ vote_map2
 saveWidget(vote_map2, file = "vote_map2.html")
 ```
 
+```{r, warning=FALSE, results=FALSE, message=FALSE}
+vote_pts <- st_centroid(vote)
+
+early_vote_pts <- st_centroid(early_vote)
+
+mail_vote_pts <- st_centroid(mail_vote)
+                              
+
+```
+
+
+## Final Map
+The select tab code for this map was informed by this tutorial - https://rstudio.github.io/leaflet/showhide.html
+```{r}
+vote_map3 <- leaflet(options = leafletOptions(minZoom = 10, maxZoom = 18)) %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite (default)") %>%
+  addProviderTiles(providers$Esri.WorldStreetMap, group = "Esri Street Map") %>%
+   
+  addPolygons(data = DC, fillColor = "purple", color = "purple",  fillOpacity = 0.03,
+             stroke = FALSE)  %>%
+  
+  addCircles(data = mail_vote_pts,  fillColor = "red", color = "red", 
+             stroke = FALSE, radius = 80, group = "Mail-In Vote Drop off Site",
+              highlightOptions = highlightOptions(fillColor = "red", 
+                                                  fillOpacity = 1), 
+  
+             popup = paste("Mail-In Vote Drop Off Site", "<br/>", "Location Name:", mail_vote_pts$DROP_SITE, "<br/>",
+                            "Address:", mail_vote_pts$ADDRESS, "<br/>",
+                            "Facility Type: ", mail_vote_pts$FACILITY_TYPE, "<br/>")) %>%    
+  
+  addCircles(data = early_vote_pts, fillColor = "blue", color = "blue", 
+             stroke = FALSE, radius = 80, group = "Early Voting Site",
+              highlightOptions = highlightOptions(fillColor = "blue", 
+                                                  fillOpacity = 1), 
+             
+ 
+             popup = paste("Early Voting Site", "<br/>", "Location Name:", early_vote_pts$LOCATION, "<br/>",
+                            "Address:", early_vote_pts$StAddr, "<br/>",
+                            "Facility Type: ", early_vote_pts$USER_VOTING_SPACE, "<br/>")) %>%  
+  
+  
+  
+    addCircles(data = vote_pts, fillColor = "black", color = "black", 
+             stroke = FALSE, radius = 80, group = "Day of Voting Site",
+              highlightOptions = highlightOptions(fillColor = "Gray", 
+                                                  fillOpacity = 1), 
+             
+             popup = paste("Day of Voting Site", "<br/>", "Location Name:", vote_pts$LOCATION, "<br/>",
+                            "Address:", vote_pts$StAddr, "<br/>",
+                            "Facility Type: ", vote_pts$USER_VOTING_SPACE, " <br/>",
+                           "Early Vote Center: ", vote_pts$EARLY_VOTE_CENTER,  "<br/>")) %>%
+               
+    addControl("2020 Primary Election Voting Locations in Washington DC", position = "topright") %>%
+  
+  addControl('<a href="https://opendata.dc.gov/">Data source</a>',
+             position = "bottomleft") %>%
+
+  addLayersControl(
+    baseGroups = c("Toner Lite (default)", "Esri Street Map"),
+    overlayGroups = c("Day of Voting Site", "Mail-In Vote Drop off Site", "Early Voting Site"),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+ setMaxBounds( lng1 = -76.9,
+                lat1 = 38.80,
+                lng2 = -77.2,
+                lat2 = 39)
+
+
+
+vote_map3
+```
+
+
+```{r}
+saveWidget(vote_map3, file = "vote_map3.html")
+
+```
