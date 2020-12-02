@@ -55,7 +55,7 @@ pal <- colorNumeric("viridis",
                     domain = boston_nhoods2$med_income,
                     na.color = "#00000000")
 
-leaflet(boston_nhoods2) %>%
+map1 <- leaflet(boston_nhoods2) %>%
   addProviderTiles(providers$Stamen.TonerLite) %>%
   addPolygons(highlightOptions = highlightOptions(fillOpacity = 1),
               label = ~label,
@@ -63,9 +63,13 @@ leaflet(boston_nhoods2) %>%
               weight = 1, color = "black") %>% 
   addLegend(pal = pal, 
             values = ~med_income,
-            bins = 3,
+            bins = 4,
             opacity = 0.7, title = "Median Income (2017)",
             position = "topright")
+
+map1
+
+saveWidget(map1, file = "Boston_Income_Map1.html")
 
 ```
 
@@ -81,7 +85,8 @@ points <- st_centroid(
   st_transform(boston_nhoods, crs = MA_state_plane)) %>%
   st_transform(WGS84)
 
-leaflet(points) %>%
+map2 <- leaflet(points) %>%
+  addControl("Median Neighborhood Income", position = "topright") %>%
   addProviderTiles(providers$Stamen.TonerLite) %>%
   addCircles(highlightOptions = highlightOptions(fillOpacity = 1),
              fillColor = ~pal(med_income),
@@ -90,7 +95,7 @@ leaflet(points) %>%
              fillOpacity = 1) %>%
   addLegend(pal = pal, 
             values = ~med_income,
-            bins = 3,
+            bins = 4,
             opacity = 0.7, title = "Median Income (2017)",
             position = "topright")
 
@@ -123,11 +128,66 @@ idw_interp_clip <- mask(idw_interp, nhoods_inter)
 leaflet(points) %>%
   addProviderTiles(providers$Stamen.TonerLite) %>%
   addRasterImage(idw_interp_clip, colors = pal, opacity = 0.8) %>% 
+  addControl("Boston Median Neighborhood Income", position = "topright") %>%
+  addControl("Median Neighborhood Income", position = "topright") %>%
   addLegend(pal = pal, 
             values = ~med_income,
-            bins = 3,
+            bins = 4,
             opacity = 0.7, title = "Median Income (2017)",
             position = "topright")
+```
+
+
+```{r, warning=FALSE, message=FALSE}
+
+boston_nhoods <- boston_nhoods %>%
+  mutate(med_income = c(68209, 76968, 32103, 38235, 65090, 65090 ,65090, 82965, 25937, 77161, 93033, 51549, 91067, 90694, 93033, 65090, 34483, 50110, 79424, 65260, 43256, 47200, 111518, 77223, 88469, NA))
+
+boston_nhoods2 <- drop_na(boston_nhoods)
+
+boston_nhoods2$label <- 
+   paste("<b>",  
+         "<p style='color:Black;'>",
+          boston_nhoods2$Name, "</b>","</p>",
+          "Median Income:",
+          ifelse( boston_nhoods2$med_income==0,
+                                      "<span style = 'color:Gray;'> Not Available",
+                                      ifelse(boston_nhoods2$med_income >
+                                               62021,
+                                             "<span style = 'color:Green;'>",
+                                             "<span style = 'color:Red;'>")),
+                               ifelse(boston_nhoods2$med_income == 0, "",
+                               "$"), ifelse(boston_nhoods2$med_income == 0, "",
+                                 prettyNum( boston_nhoods2$med_income, 
+                                             digits = 6, big.mark = ",")),
+                               "</span></b></p>") %>%
+  
+   lapply(htmltools::HTML)
+
+
+bins <- seq(min(boston_nhoods2$med_income),
+            max(boston_nhoods2$med_income))
+pal <- colorNumeric("viridis", 
+                    domain = boston_nhoods2$med_income,
+                    na.color = "#00000000")
+
+leaflet(boston_nhoods2) %>%
+  addProviderTiles(providers$Stamen.TonerLite) %>%
+  addControl("Median Neighborhood Income", position = "topright") %>%
+  addPolygons(highlightOptions = highlightOptions(fillOpacity = 1),
+              label = ~label,
+              fillColor = ~pal(med_income),
+              weight = 1, color = "black") %>% 
+  addLegend(pal = pal, 
+            values = ~med_income,
+            bins = 4,
+            opacity = 0.7, title = "Median Income (2017)",
+            position = "topright") %>%
+  addLegend(position = "bottomright",
+            colors = c("green","red"),
+            labels = c("Higher than Boston Median Income",
+                       "Lower than Boston Median Income"),
+            title = "Census Tract Pop-up Text") 
 ```
 
 # Map Comparisons
