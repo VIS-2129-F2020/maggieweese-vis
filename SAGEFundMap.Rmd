@@ -1,0 +1,151 @@
+---
+title: "SAGE Map"
+author: "Maggie Weese"
+date: "10/23/2020"
+output: 
+  html_document:
+    theme: spacelab
+    toc: true
+    toc_float: true
+ 
+---
+
+## Downloading Libraries
+```{r, warning=FALSE, results=FALSE, message=FALSE}
+library(tidyverse)
+library(sf)
+library(leaflet)
+library(htmltools)
+library(htmlwidgets)
+library(stringr)
+```
+
+## Creating Centroids for My Data
+```{r, warning=FALSE, results=FALSE, message=FALSE}
+
+SAGE_pts <- Subgrant_Info_Tracker_forMap
+
+
+
+```
+
+```{r}
+SAGE_map <- leaflet(SAGE_pts) %>%
+  addProviderTiles(providers$Stamen.TonerLite, group = "Toner Lite (default)") %>%
+  addProviderTiles(providers$Esri.WorldStreetMap, group = "Esri Street Map") %>%
+  
+  
+ addMarkers(~longitude, ~latitude)
+
+
+
+
+
+SAGE_map
+```
+
+```{r}
+pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
+
+
+ addCircles(data = (~longitude, ~latitude), fillColor = "black", color = "black", 
+             stroke = FALSE, radius = 80, group = "Day of Voting Site",
+              highlightOptions = highlightOptions(fillColor = "Gray", 
+                                                  fillOpacity = 1), 
+            
+             addCircles(data = mail_vote_pts, fillColor = "red", color = "red", 
+             stroke = FALSE, radius = 80, group = "Mail-In Vote Drop off Site",
+              highlightOptions = highlightOptions(fillColor = "red", 
+                                                  fillOpacity = 1),
+
+```
+```{r}
+
+R1 <- SAGE_pts[1:6,]
+
+R2 <- SAGE_pts[7:9,]
+
+R3 <- SAGE_pts[10:19,]
+
+R4 <- SAGE_pts[20:23,]
+
+R5 <- SAGE_pts[24:28,]
+
+WEJ <- SAGE_pts[29:39,]
+
+R6 <- SAGE_pts[40:45,]
+```
+
+```{r, fig.width=8, fig.height=8}
+
+SAGE_map <- leaflet(SAGE_pts) %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
+  
+
+ addCircles(data=R1, ~longitude, ~latitude, fillColor="Green", color="Green", radius = 80, group = "Investment Mapping Tools", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
+
+          popup = paste("<b>",  
+         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
+        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+               
+
+ addCircles(data=R2, ~longitude, ~latitude, fillColor = "Yellow", color="Yellow",  radius = 80, group = "Remedy and OGMs", highlightOptions = highlightOptions(color = "turquoise", opacity = 1), 
+            
+          popup = paste("<b>",  
+         "<p style='color:Black;'>", SAGE_pts$ProjectName,  "</b>", SAGE_pts$Locations, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners)) %>%
+ 
+ 
+ addCircles(data=R3, ~longitude, ~latitude, fillColor = "Orange", color="Orange", radius = 80, group = "Community Driven Strategies", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
+          
+          popup = paste("<b>",  
+         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
+        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+ 
+  addCircles(data=R4, ~longitude, ~latitude, fillColor="Red", color="Red", radius = 80, group = "Enforcement Strategies", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
+        
+        popup = paste("<b>",  
+         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
+        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+  
+    addCircles(data=R5, ~longitude, ~latitude, fillColor="Blue", color="Blue",  radius = 80, group = "Remedy for Mining Disasters", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
+          
+        popup = paste("<b>",  
+         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
+        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+
+addCircles(data=WEJ, ~longitude, ~latitude, fillColor="Purple", color="Purple", radius = 80, group = "Women's Economic Justice", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
+           
+        popup = paste("<b>",  
+         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>")) %>%
+  
+addCircles(data=R6, ~longitude, ~latitude, fillColor="Pink", color="Pink", opacity = .5, radius = 80, group = "Round 6", highlightOptions = highlightOptions(color = "Pink", opacity = 1),
+           
+          popup = paste("<b>",  
+         "<p style='color:Black;'>",SAGE_pts$ProjectName, "</b>", ", ", SAGE_pts$Locations, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
+        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+
+addLayersControl(
+    overlayGroups = c("Investment Mapping Tools", "Remedy and OGMs", "Community Driven Strategies", "Enforcement Strategies", "Remedy for Mining Disasters", "Women's Economic Justice", "Round 6"),
+    options = layersControlOptions(collapsed = FALSE))
+
+
+SAGE_map
+
+saveWidget(SAGE_map, file = "SAGEMap1.html")
+
+
+```
