@@ -45,20 +45,32 @@ SAGE_map
 ```
 
 ```{r}
-pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
+#al <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
 
 
- addCircles(data = (~longitude, ~latitude), fillColor = "black", color = "black", 
-             stroke = FALSE, radius = 80, group = "Day of Voting Site",
-              highlightOptions = highlightOptions(fillColor = "Gray", 
-                                                  fillOpacity = 1), 
+ #addCircles(data = (~longitude, ~latitude), fillColor = "black", color = "black", 
+            # stroke = FALSE, radius = 80, group = "Day of Voting Site",
+             # highlightOptions = highlightOptions(fillColor = "Gray", 
+                                            #      fillOpacity = 1), 
             
-             addCircles(data = mail_vote_pts, fillColor = "red", color = "red", 
-             stroke = FALSE, radius = 80, group = "Mail-In Vote Drop off Site",
-              highlightOptions = highlightOptions(fillColor = "red", 
-                                                  fillOpacity = 1),
+           #  addCircles(data = mail_vote_pts, fillColor = "red", color = "red", 
+             #stroke = FALSE, radius = 80, group = "Mail-In Vote Drop off Site",
+            #  highlightOptions = highlightOptions(fillColor = "red", 
+                                                #  fillOpacity = 1),
 
+"<p style='color:Black;'>", SAGE_pts$ProjectName, "</b>", "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
+        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations), popupOptions = popupOptions(maxWidth = 1000, closeOnClick = TRUE)
+
+        
+        ) %>%
+  
+  
 ```
+
+
+
 ```{r}
 
 R1 <- SAGE_pts[1:6,]
@@ -74,78 +86,183 @@ R5 <- SAGE_pts[24:28,]
 WEJ <- SAGE_pts[29:39,]
 
 R6 <- SAGE_pts[40:45,]
+
+
+num <- as.numeric(c(6000, 400, 10, 5000, 10))
+
+
+SAGE_pts$describe <- paste("<b>",  
+         "<p style='color:Black;'>", "<I>", SAGE_pts$ProjectName, "<I>", "</b>", "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
+        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
+        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations) %>%
+  lapply(htmltools::HTML)
+
 ```
 
 ```{r, fig.width=8, fig.height=8}
 
-SAGE_map <- leaflet(SAGE_pts) %>%
+SAGE_map1 <- leaflet(SAGE_pts) %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
   
 
- addCircles(data=R1, ~longitude, ~latitude, fillColor="Green", color="Green", radius = 80, group = "Investment Mapping Tools", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
-
-          popup = paste("<b>",  
-         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
-        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+addCircles(data=R1, ~longitude, ~latitude, fillColor="Green", fillOpacity = 1, color="Green", group = "Investment Mapping Tools", highlightOptions = highlightOptions(color = "Black", opacity = .2), 
+                                    popup = ~describe) %>%
                
 
- addCircles(data=R2, ~longitude, ~latitude, fillColor = "Yellow", color="Yellow",  radius = 80, group = "Remedy and OGMs", highlightOptions = highlightOptions(color = "turquoise", opacity = 1), 
-            
-          popup = paste("<b>",  
-         "<p style='color:Black;'>", SAGE_pts$ProjectName,  "</b>", SAGE_pts$Locations, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners)) %>%
+ addCircles(data=R2, ~longitude, ~latitude, fillOpacity=0.8, fillColor = "Yellow", color="Yellow",  radius = 800, group = "Remedy and OGMs", highlightOptions = highlightOptions(color = "Black", opacity = .2), 
+                                    popup = ~describe) %>%
  
  
- addCircles(data=R3, ~longitude, ~latitude, fillColor = "Orange", color="Orange", radius = 80, group = "Community Driven Strategies", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
-          
-          popup = paste("<b>",  
-         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
-        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
- 
-  addCircles(data=R4, ~longitude, ~latitude, fillColor="Red", color="Red", radius = 80, group = "Enforcement Strategies", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
-        
-        popup = paste("<b>",  
-         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
-        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
-  
-    addCircles(data=R5, ~longitude, ~latitude, fillColor="Blue", color="Blue",  radius = 80, group = "Remedy for Mining Disasters", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
-          
-        popup = paste("<b>",  
-         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
-        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+ addCircles(data=R3, ~longitude, ~latitude, fillOpacity=0.8, fillColor = "Orange", color="Orange", radius = 800, group = "Community Driven Strategies", highlightOptions = highlightOptions(color = "Black", opacity = 0.2),
+                           popup = ~describe) %>%
 
-addCircles(data=WEJ, ~longitude, ~latitude, fillColor="Purple", color="Purple", radius = 80, group = "Women's Economic Justice", highlightOptions = highlightOptions(color = "turquoise", opacity = 1),
-           
-        popup = paste("<b>",  
-         "<p style='color:Black;'>", "Project Name", "</b>", SAGE_pts$ProjectName, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>")) %>%
+ 
+  addCircles(data=R4, ~longitude, ~latitude, fillColor="Red", color="Red", radius = 800, group = "Enforcement Strategies", highlightOptions = highlightOptions(color = "Black", opacity = 0.2),
+                                  popup = ~describe) %>%
+
   
-addCircles(data=R6, ~longitude, ~latitude, fillColor="Pink", color="Pink", opacity = .5, radius = 80, group = "Round 6", highlightOptions = highlightOptions(color = "Pink", opacity = 1),
-           
-          popup = paste("<b>",  
-         "<p style='color:Black;'>",SAGE_pts$ProjectName, "</b>", ", ", SAGE_pts$Locations, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Lead:", "</b>", SAGE_pts$Lead, "<br/>", 
-        "<b>", "<p style='color:Black;'>", "Project Partners:", "</b>", SAGE_pts$Partners, "<br/>",
-        "<b>", "<p style='color:Black;'>", "Location:","</b>", SAGE_pts$Locations)) %>%
+    addCircles(data=R5, ~longitude, ~latitude, fillOpacity=0.8, fillColor="Blue", color="Blue",  radius = 800, group = "Remedy for Mining Disasters", highlightOptions = highlightOptions(color = "Black", opacity = 0.2),
+                                   popup = ~describe) %>%
+
+
+addCircles(data=WEJ, ~longitude, ~latitude, fillOpacity=0.8, fillColor="Purple", color="Purple", radius = 80, group = "Women's Economic Justice", highlightOptions = highlightOptions(color = "Black", opacity = 0.2),
+                                      popup = ~describe) %>%
+
+  
+addCircles(data=R6, ~longitude, ~latitude, fillOpacity=0.8, fillColor="Pink", color="Pink", opacity = .5, radius = 80, group = "Round 6", highlightOptions = highlightOptions(color = "Black", opacity = 0.2),
+                                    popup = ~describe) %>%
 
 addLayersControl(
     overlayGroups = c("Investment Mapping Tools", "Remedy and OGMs", "Community Driven Strategies", "Enforcement Strategies", "Remedy for Mining Disasters", "Women's Economic Justice", "Round 6"),
-    options = layersControlOptions(collapsed = FALSE))
+    options = layersControlOptions(collapsed = FALSE)) %>%
+
+addCircleMarkers(data=R6, ~longitude, ~latitude, fillOpacity=0.8, fillColor="Pink", color=NA, group = "Round 6",  radius = 5.2,
+                                    popup = ~describe)
 
 
-SAGE_map
-
-saveWidget(SAGE_map, file = "SAGEMap1.html")
+SAGE_map1
 
 
 ```
+
+```{r, fig.width=8, fig.height=8}
+
+SAGE_map2 <- leaflet(SAGE_pts, options = leafletOptions(minZoom = 2, maxZoom = 4)) %>%
+  addProviderTiles(providers$OpenStreetMap.DE) %>%
+  
+
+addCircleMarkers(data=R1, ~longitude, ~latitude, fillColor="#618f5b", fillOpacity = .95, color=NA, group = "Investment Mapping Tools", radius = 5.2,
+                           popup = ~describe) %>%
+
+               
+
+addCircleMarkers(data=R2, ~longitude, ~latitude, fillOpacity=.9, fillColor = "#bcbb24", color=NA, group = "Remedy and OGMs", radius = 5.2,
+                           popup = ~describe) %>% 
+  
+ 
+addCircleMarkers(data=R3, ~longitude, ~latitude, fillOpacity=0.7, fillColor = "#ca7112", color= NA, group = "Community Driven Strategies", radius = 5.2,
+                           popup = ~describe) %>%
+
+ 
+addCircleMarkers(data=R4, ~longitude, ~latitude, fillOpacity=0.75, fillColor="#b13128", color= NA, group = "Enforcement Strategies", radius = 5.2,
+                                  popup = ~describe) %>%
+
+  
+addCircleMarkers(data=R5, ~longitude, ~latitude, fillOpacity=0.8, fillColor="#516c86", color= NA, group = "Remedy for Mining Disasters", radius = 5.2,
+                                   popup = ~describe) %>%
+
+
+addCircleMarkers(data=WEJ, ~longitude, ~latitude, color = NA, fillColor="#774a6a", fillOpacity = 0.8, group = "Women's Economic Justice", radius = 5.2,
+                                      popup = ~describe) %>%
+
+addControl("Project Locations", position = "topright") %>%
+
+
+addLayersControl(
+    overlayGroups = c("Investment Mapping Tools", "Remedy and OGMs", "Community Driven Strategies", "Enforcement Strategies", "Remedy for Mining Disasters", "Women's Economic Justice", "Round 6"),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+
+
+  setMaxBounds( lng1 = -150,
+                lat1 = -100,
+                lng2 = 150,
+                lat2 = 100)
+
+
+SAGE_map2
+```
+
+```{r, fig.width=8, fig.height=8}
+
+SAGE_map3 <- leaflet(SAGE_pts, options = leafletOptions(minZoom = 2, maxZoom = 4)) %>%
+  addProviderTiles(providers$CartoDB.VoyagerNoLabels) %>%
+  
+
+addCircleMarkers(data=R1, ~longitude, ~latitude, fillColor="#618f5b", fillOpacity = .85, color=NA, group = "Investment Mapping Tools", radius = 6.5,
+                           popup = ~describe) %>%
+
+               
+
+addCircleMarkers(data=R2, ~longitude, ~latitude, fillOpacity=.92, fillColor = "#DEDE2A", color=NA, group = "Remedy and OGMs", radius = 6.5,
+                           popup = ~describe) %>% 
+  
+ 
+addCircleMarkers(data=R3, ~longitude, ~latitude, fillOpacity=0.8, fillColor = "#ca7112", color= NA, group = "Community Driven Strategies", radius = 6.5,
+                           popup = ~describe) %>%
+
+ 
+addCircleMarkers(data=R4, ~longitude, ~latitude, fillOpacity=0.8, fillColor="#b13128", color= NA, group = "Enforcement Strategies", radius = 6.5,
+                                  popup = ~describe) %>%
+
+  
+addCircleMarkers(data=R5, ~longitude, ~latitude, fillOpacity=0.9, fillColor="#516c86", color= NA, group = "Remedy for Mining Disasters", radius = 6.5,
+                                   popup = ~describe) %>%
+
+
+addCircleMarkers(data=WEJ, ~longitude, ~latitude, color = NA, fillColor= "#783A6B", fillOpacity = 0.8, group = "Women's Economic Justice", radius = 6.5,
+                                      popup = ~describe) %>%
+
+
+ addLegend(position = "topright", 
+            colors = c("#618f5b", 
+                       "#DEDE2A",
+                      "#ca7112",
+                      "#b13128",
+                      "#516c86",
+                      "#783A6B"
+                      ),
+           
+           
+            labels = c("Investment Mapping Tools",
+                       "Remedy and OGMs",
+                       "Community Driven Strategies",
+                       "Enforcement Strategies",
+                       "Remedy for Mining Disasters",
+                       "Women's Economic Justice"
+                       ),
+           
+           
+            title = "SAGE Fund Project Locations")  %>%
+  
+  addLayersControl(position = "topleft",
+    overlayGroups = c("Investment Mapping Tools", "Remedy and OGMs", "Community Driven Strategies", "Enforcement Strategies", "Remedy for Mining Disasters", "Women's Economic Justice"),
+    options = layersControlOptions(collapsed = FALSE)) %>%
+
+  setMaxBounds( lng1 = -150,
+                lat1 = -100,
+                lng2 = 150,
+                lat2 = 100)
+
+
+SAGE_map3
+```
+
+```{r}
+saveWidget(SAGE_map2, file = "SAGE_Map2.html")
+
+
+saveWidget(SAGE_map3, file = "SAGE_Map3.html")
+
+```
+
