@@ -67,10 +67,11 @@ POAH_Props$describe <- paste("<b>",
 # CCBHC Site Pop UP
 
 CCBHC$describe2 <- paste("<b>",  
-         "<p style='color:Black;'>", CCBHC$CCBHC_Name, "</b>", 
-        "<b>", "<p style='color:Black;'>", " Address:", "</b>", CCBHC$CCHBC_Address, ",",  
-        "<b>", "<p style='color:Black;'>", "Website:","</b>", CCBHC$CCHBC_Website) %>%
+         "<p style='color:Black;'>", "<p style='font-size:16px;color:Black;'>", CCBHC$CCBHC_Name, "</b>", 
+        "<b>", "<p style='color:Black;'>", " Address:", "</b>", CCBHC$CCHBC_Address,
+        "<b>", "<p style='color:Black;'>","Website:","</b>", CCBHC$CCHBC_Website) %>%
   lapply(htmltools::HTML)
+
 
 ```
 
@@ -79,9 +80,12 @@ CCBHC$describe2 <- paste("<b>",
 # FQHC Site Pop UP
 
 FQHC$describe3 <- paste("<b>",  
-         "<p style='color:Black;'>", "<p style='font-size:16px;'>", FQHC$F_Satellite_Name, "</b>", "<br/>", 
-        "<b>", "<p style='color:Black;'>", " Address:", "</b>", FQHC$F_Address, ", ", "Site Type:","</b>", FQHC$F_Site_Type, ",", "Phone Number:","</b>", FQHC$F_Telephone) %>%
+         "<p style='color:Black;'>", "<p style='font-size:16px;color:Black;'>", FQHC$F_Satellite_Name, "</b>", 
+        "<b>", "<p style='color:Black;'>", " Address:", "</b>", FQHC$F_Place_addr,
+        "<b>", "<p style='color:Black;'>", "Site Type:","</b>", FQHC$F_Site_Type, 
+        "<b>", "<p style='color:Black;'>", "Phone Number:","</b>", FQHC$F_Telephone) %>%
   lapply(htmltools::HTML)
+
 ```
 
 ```{r, fig.width=8, fig.height=8}
